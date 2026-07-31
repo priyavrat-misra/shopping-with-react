@@ -60,7 +60,7 @@ function Body() {
   return (
     <main>
       <Menu />
-      <h2>Address</h2>
+      <Address />
       <h2>Cart</h2>
     </main>
   );
@@ -107,6 +107,70 @@ function Pizza({ pizza }) {
           </button>
         </div>
       )}
+    </>
+  );
+}
+
+function Address() {
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+
+  function handleSubmit(event) {
+    event.preventDefault(); // prevent page reload
+    console.log({ name: name, address: address, phone: phone });
+    setName("");
+    setAddress("");
+    setPhone("");
+  }
+
+  return (
+    <>
+      <h2>Address</h2>
+      <form onSubmit={handleSubmit}>
+        <fieldset>
+          <legend>New Address</legend>
+          <p>
+            <label>
+              Name:&nbsp;
+              <input
+                type="text"
+                required
+                name="name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+            </label>
+          </p>
+          <p>
+            <label>
+              Address:&nbsp;
+              <input
+                type="text"
+                required
+                name="address"
+                value={address}
+                onChange={(event) => setAddress(event.target.value)}
+              />
+            </label>
+          </p>
+          <p>
+            <label>
+              Phone:&nbsp;
+              <input
+                type="tel"
+                required
+                name="phone"
+                placeholder="123-456-7890"
+                pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+              />
+            </label>
+          </p>
+        </fieldset>
+        <button>Submit</button>
+      </form>
     </>
   );
 }
