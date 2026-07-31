@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 const pizzaData = [
   {
@@ -71,14 +71,42 @@ function Menu() {
     <>
       <h2>Menu</h2>
       <ul>
-        {pizzaData.map((pizza) => (
-          <li key={pizza.name}>
-            <h3>{pizza.name}</h3>
-            <p>Ingredients: {pizza.ingredients}</p>
-            <p>{`Price: $${pizza.price}`}</p>
+        {pizzaData.map((pizza, index) => (
+          <li key={`pizza#${index}`}>
+            <Pizza pizza={pizza} />
           </li>
         ))}
       </ul>
+    </>
+  );
+}
+
+function Pizza({ pizza }) {
+  const [count, setCount] = useState(0);
+  return (
+    <>
+      <h3 style={!pizza.available ? { textDecoration: "line-through" } : null}>
+        {pizza.name}
+      </h3>
+      <p>
+        Ingredients: <em>{pizza.ingredients}</em>
+      </p>
+      <p>{!pizza.available ? "Out of Stock" : `Price: $${pizza.price}`}</p>
+      {!!pizza.available && (
+        <div>
+          <span>Quantity: </span>
+          <button onClick={() => setCount(count - 1)} disabled={!count}>
+            -
+          </button>
+          {count}
+          <button
+            onClick={() => setCount(count + 1)}
+            disabled={count === pizza.available}
+          >
+            +
+          </button>
+        </div>
+      )}
     </>
   );
 }
