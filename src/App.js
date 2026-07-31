@@ -112,66 +112,120 @@ function Pizza({ pizza }) {
 }
 
 function Address() {
+  const [addresses, setAddresses] = useState([]);
+  const [addNew, setAddNew] = useState(true);
+
+  function handleAddAddress(newAddress) {
+    setAddresses((addresses) => [...addresses, newAddress]);
+    setAddNew(!addNew);
+  }
+
+  return (
+    <>
+      <h2>Address</h2>
+      {addresses.length > 0 && <ChooseAddress addresses={addresses} />}
+      {addNew ? (
+        <>
+          <AddAddress onAddAddress={handleAddAddress} />
+          {addresses.length > 0 && (
+            <button onClick={() => setAddNew(!addNew)}>Cancel</button>
+          )}
+        </>
+      ) : (
+        <button onClick={() => setAddNew(!addNew)}>Add New</button>
+      )}
+    </>
+  );
+}
+
+function ChooseAddress({ addresses }) {
+  return (
+    <form>
+      <fieldset>
+        <legend>Choose Address</legend>
+        {addresses
+          .map(
+            (address) =>
+              `${address.name}; ${address.address}; ${address.phone}`,
+          )
+          .map((address, index, addresses) => (
+            <React.Fragment key={`address#${index}`}>
+              <label>
+                <input
+                  type="radio"
+                  name="address"
+                  key={address}
+                  value={address}
+                  defaultChecked={index === addresses.length - 1}
+                />
+                {address}
+              </label>
+              <br />
+            </React.Fragment>
+          ))}
+      </fieldset>
+    </form>
+  );
+}
+
+function AddAddress({ onAddAddress }) {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
 
   function handleSubmit(event) {
     event.preventDefault(); // prevent page reload
-    console.log({ name: name, address: address, phone: phone });
+    onAddAddress({ name: name, address: address, phone: phone });
     setName("");
     setAddress("");
     setPhone("");
   }
 
   return (
-    <>
-      <h2>Address</h2>
-      <form onSubmit={handleSubmit}>
-        <fieldset>
-          <legend>New Address</legend>
-          <p>
-            <label>
-              Name:&nbsp;
-              <input
-                type="text"
-                required
-                name="name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </label>
-          </p>
-          <p>
-            <label>
-              Address:&nbsp;
-              <input
-                type="text"
-                required
-                name="address"
-                value={address}
-                onChange={(event) => setAddress(event.target.value)}
-              />
-            </label>
-          </p>
-          <p>
-            <label>
-              Phone:&nbsp;
-              <input
-                type="tel"
-                required
-                name="phone"
-                placeholder="123-456-7890"
-                pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-              />
-            </label>
-          </p>
-        </fieldset>
-        <button>Submit</button>
-      </form>
-    </>
+    <form onSubmit={handleSubmit}>
+      <fieldset>
+        <legend>New Address</legend>
+        <p>
+          <label>
+            Name:&nbsp;
+            <input
+              type="text"
+              required
+              name="name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
+          </label>
+        </p>
+        <p>
+          <label>
+            Address:&nbsp;
+            <input
+              type="text"
+              required
+              name="address"
+              value={address}
+              onChange={(event) => setAddress(event.target.value)}
+            />
+          </label>
+        </p>
+        <p>
+          <label>
+            Phone:&nbsp;
+            <input
+              type="tel"
+              required
+              name="phone"
+              placeholder="123-456-7890"
+              pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+            />
+          </label>
+        </p>
+      </fieldset>
+      <button>Submit</button>
+    </form>
   );
 }
 
