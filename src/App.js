@@ -71,8 +71,8 @@ function Menu() {
     <>
       <h2>Menu</h2>
       <ul>
-        {pizzaData.map((pizza, index) => (
-          <li key={`pizza#${index}`}>
+        {pizzaData.map((pizza) => (
+          <li key={crypto.randomUUID()}>
             <Pizza pizza={pizza} />
           </li>
         ))}
@@ -112,76 +112,105 @@ function Pizza({ pizza }) {
 }
 
 function Address() {
-  const [addresses, setAddresses] = useState([]);
-  const [addNew, setAddNew] = useState(true);
+  const [addressState, setAddressState] = useState({
+    list: [],
+    selectedId: null,
+  });
+
+  const { list: addresses, selectedId } = addressState;
 
   function handleAddAddress(newAddress) {
-    setAddresses((addresses) => [...addresses, newAddress]);
-    setAddNew(!addNew);
+    const addressWithId = { ...newAddress, id: crypto.randomUUID() };
+    setAddressState((prev) => ({
+      list: [...prev.list, addressWithId],
+      selectedId: addressWithId.id,
+    }));
+  }
+
+  function handleRemoveAddress(idToRemove) {
+    setAddressState((prev) => {
+      const nextList = prev.list.filter((addr) => addr.id !== idToRemove);
+      return {
+        list: nextList,
+        selectedId: nextList.length ? nextList[0].id : null,
+      };
+    });
   }
 
   return (
     <>
       <h2>Address</h2>
-      {addresses.length > 0 && <ChooseAddress addresses={addresses} />}
-      {addNew ? (
-        <>
-          <AddAddress onAddAddress={handleAddAddress} />
-          {addresses.length > 0 && (
-            <button onClick={() => setAddNew(!addNew)}>Cancel</button>
-          )}
-        </>
-      ) : (
-        <button onClick={() => setAddNew(!addNew)}>Add New</button>
+      {addresses.length > 0 && (
+        <ChooseAddress
+          addresses={addresses}
+          selectedId={selectedId}
+          onSelect={(id) =>
+            setAddressState((prev) => ({ ...prev, selectedId: id }))
+          }
+          onRemoveAddress={handleRemoveAddress}
+        />
       )}
+      <AddAddress onAddAddress={handleAddAddress} />
     </>
   );
 }
 
-function ChooseAddress({ addresses }) {
+function ChooseAddress({ addresses, selectedId, onSelect, onRemoveAddress }) {
+  function handleSubmit(event) {
+    event.preventDefault();
+    const action = event.nativeEvent.submitter.value;
+    if (action === "remove") {
+      onRemoveAddress(selectedId);
+    } else if (action === "use") {
+      console.log(addresses.find((addr) => addr.id === selectedId));
+    }
+  }
+
   return (
-    <form>
+    <form onSubmit={handleSubmit}>
       <fieldset>
         <legend>Choose Address</legend>
-        {addresses
-          .map(
-            (address) =>
-              `${address.name}; ${address.address}; ${address.phone}`,
-          )
-          .map((address, index, addresses) => (
-            <React.Fragment key={`address#${index}`}>
-              <label>
-                <input
-                  type="radio"
-                  name="address"
-                  key={address}
-                  value={address}
-                  defaultChecked={index === addresses.length - 1}
-                />
-                {address}
-              </label>
-              <br />
-            </React.Fragment>
-          ))}
+        {addresses.map((address) => (
+          <React.Fragment key={address.id}>
+            <label>
+              <input
+                type="radio"
+                name="address"
+                checked={selectedId === address.id}
+                onChange={() => onSelect(address.id)}
+              />
+              {address.name}; {address.address}; {address.phone}
+            </label>
+            <br />
+          </React.Fragment>
+        ))}
       </fieldset>
+      <button type="submit" value="use">
+        Use
+      </button>
+      <button type="submit" value="remove">
+        Remove
+      </button>
     </form>
   );
 }
 
 function AddAddress({ onAddAddress }) {
+  const [addNew, setAddNew] = useState(true);
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
 
   function handleSubmit(event) {
-    event.preventDefault(); // prevent page reload
-    onAddAddress({ name: name, address: address, phone: phone });
+    event.preventDefault();
+    setAddNew(false);
     setName("");
     setAddress("");
     setPhone("");
+    onAddAddress({ name, address, phone }); // Note: values are non-empty as the above setters are async
   }
 
-  return (
+  return addNew ? (
     <form onSubmit={handleSubmit}>
       <fieldset>
         <legend>New Address</legend>
@@ -191,9 +220,8 @@ function AddAddress({ onAddAddress }) {
             <input
               type="text"
               required
-              name="name"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(e) => setName(e.target.value)}
             />
           </label>
         </p>
@@ -203,9 +231,8 @@ function AddAddress({ onAddAddress }) {
             <input
               type="text"
               required
-              name="address"
               value={address}
-              onChange={(event) => setAddress(event.target.value)}
+              onChange={(e) => setAddress(e.target.value)}
             />
           </label>
         </p>
@@ -215,17 +242,23 @@ function AddAddress({ onAddAddress }) {
             <input
               type="tel"
               required
-              name="phone"
               placeholder="123-456-7890"
               pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
               value={phone}
-              onChange={(event) => setPhone(event.target.value)}
+              onChange={(e) => setPhone(e.target.value)}
             />
           </label>
         </p>
       </fieldset>
-      <button>Submit</button>
+      <button type="submit" value="add">
+        Add
+      </button>
+      <button type="button" value="cancel" onClick={() => setAddNew(false)}>
+        Cancel
+      </button>
     </form>
+  ) : (
+    <button onClick={() => setAddNew(true)}>Add New</button>
   );
 }
 
