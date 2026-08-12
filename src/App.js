@@ -36,7 +36,12 @@ const pizzaData = [
     price: 18,
     available: 1,
   },
-];
+].map((pizza, index) => {
+  return {
+    ...pizza,
+    id: `${pizza.name.toLowerCase().replace(/\s+/g, "-")}-${index}`,
+  };
+});
 
 function App() {
   return (
@@ -57,23 +62,59 @@ function Header() {
 }
 
 function Body() {
+  const [cartItems, setCartItems] = useState([]);
+
+  function handleAddItem(id) {
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.id === id);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === id ? { ...item, count: item.count + 1 } : item,
+        );
+      }
+      return [...prev, { id, count: 1 }];
+    });
+  }
+
+  function handleRemoveItem(id) {
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.id === id);
+      if (!existing) return prev;
+      if (existing.count === 1) {
+        return prev.filter((item) => item.id !== id);
+      }
+      return prev.map((item) =>
+        item.id === id ? { ...item, count: item.count - 1 } : item,
+      );
+    });
+  }
+
   return (
     <main>
-      <Menu />
+      <Menu
+        cartItems={cartItems}
+        onAddItem={handleAddItem}
+        onRemoveItem={handleRemoveItem}
+      />
       <Address />
-      <h2>Cart</h2>
+      {cartItems.length > 0 && <Cart items={cartItems} />}
     </main>
   );
 }
 
-function Menu() {
+function Menu({ cartItems, onAddItem, onRemoveItem }) {
   return (
     <>
       <h2>Menu</h2>
       <ul>
         {pizzaData.map((pizza) => (
-          <li key={crypto.randomUUID()}>
-            <Pizza pizza={pizza} />
+          <li key={pizza.id}>
+            <Pizza
+              pizza={pizza}
+              cartItems={cartItems}
+              onAddItem={onAddItem}
+              onRemoveItem={onRemoveItem}
+            />
           </li>
         ))}
       </ul>
@@ -81,8 +122,17 @@ function Menu() {
   );
 }
 
-function Pizza({ pizza }) {
-  const [count, setCount] = useState(0);
+function Pizza({ pizza, cartItems, onAddItem, onRemoveItem }) {
+  const count = cartItems.find((item) => item.id === pizza.id)?.count ?? 0;
+
+  function handleAdd() {
+    onAddItem(pizza.id);
+  }
+
+  function handleRemove() {
+    onRemoveItem(pizza.id);
+  }
+
   return (
     <>
       <h3 style={!pizza.available ? { textDecoration: "line-through" } : null}>
@@ -95,14 +145,11 @@ function Pizza({ pizza }) {
       {!!pizza.available && (
         <div>
           <span>Quantity: </span>
-          <button onClick={() => setCount(count - 1)} disabled={!count}>
+          <button onClick={handleRemove} disabled={!count}>
             -
           </button>
           {count}
-          <button
-            onClick={() => setCount(count + 1)}
-            disabled={count === pizza.available}
-          >
+          <button onClick={handleAdd} disabled={count === pizza.available}>
             +
           </button>
         </div>
@@ -259,6 +306,33 @@ function AddAddress({ onAddAddress }) {
     </form>
   ) : (
     <button onClick={() => setAddNew(true)}>Add New</button>
+  );
+}
+
+function Cart({ items }) {
+  const total = items.reduce(
+    (acc, item) =>
+      acc + item.count * (pizzaData.find((p) => p.id === item.id)?.price ?? 0),
+    0,
+  );
+
+  return (
+    <>
+      <h2>Cart</h2>
+      <ul>
+        {items.map((item) => {
+          const pizza = pizzaData.find((p) => p.id === item.id);
+          return (
+            <li key={item.id}>
+              {pizza.name} &times; {item.count}
+            </li>
+          );
+        })}
+      </ul>
+      <p>
+        <strong>Total</strong>: ${total}
+      </p>
+    </>
   );
 }
 
