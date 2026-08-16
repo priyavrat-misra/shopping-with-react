@@ -116,11 +116,24 @@ function Body() {
 }
 
 function Menu({ cartItems, onAddItem, onRemoveItem }) {
+  const [sortBy, setSortBy] = useState("");
+  const sortedPizzas = [...pizzaData];
+  if (sortBy === "price-low-high") {
+    sortedPizzas.sort((a, b) => a.price - b.price);
+  } else if (sortBy === "price-high-low") {
+    sortedPizzas.sort((a, b) => b.price - a.price);
+  } else if (sortBy === "avl-low-high") {
+    sortedPizzas.sort((a, b) => (a.available ?? 0) - (b.available ?? 0));
+  } else if (sortBy === "avl-high-low") {
+    sortedPizzas.sort((a, b) => (b.available ?? 0) - (a.available ?? 0));
+  }
+
   return (
     <>
       <h2>Menu</h2>
+      <Actions sortBy={sortBy} onSortChange={setSortBy} />
       <ul>
-        {pizzaData.map((pizza) => (
+        {sortedPizzas.map((pizza) => (
           <li key={pizza.id}>
             <Pizza
               pizza={pizza}
@@ -132,6 +145,23 @@ function Menu({ cartItems, onAddItem, onRemoveItem }) {
         ))}
       </ul>
     </>
+  );
+}
+
+function Actions({ sortBy, onSortChange }) {
+  return (
+    <section>
+      <label>
+        Sort by:&nbsp;
+        <select value={sortBy} onChange={(e) => onSortChange(e.target.value)}>
+          <option value="">--Please choose an option--</option>
+          <option value="price-low-high">Price: Low to High</option>
+          <option value="price-high-low">Price: High to Low</option>
+          <option value="avl-low-high">Availability: Low to High</option>
+          <option value="avl-high-low">Availability: High to Low</option>
+        </select>
+      </label>
+    </section>
   );
 }
 
