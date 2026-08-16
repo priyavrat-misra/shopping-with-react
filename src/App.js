@@ -115,25 +115,43 @@ function Body() {
   );
 }
 
-function Menu({ cartItems, onAddItem, onRemoveItem }) {
-  const [sortBy, setSortBy] = useState("");
-  const sortedPizzas = [...pizzaData];
+function processPizzas({ sortBy, includeOutOfStock }) {
+  let processedPizzas = [...pizzaData];
+
+  if (!includeOutOfStock)
+    processedPizzas = processedPizzas.filter((pizza) => pizza.available);
+
   if (sortBy === "price-low-high") {
-    sortedPizzas.sort((a, b) => a.price - b.price);
+    processedPizzas.sort((a, b) => a.price - b.price);
   } else if (sortBy === "price-high-low") {
-    sortedPizzas.sort((a, b) => b.price - a.price);
+    processedPizzas.sort((a, b) => b.price - a.price);
   } else if (sortBy === "avl-low-high") {
-    sortedPizzas.sort((a, b) => (a.available ?? 0) - (b.available ?? 0));
+    processedPizzas.sort((a, b) => (a.available ?? 0) - (b.available ?? 0));
   } else if (sortBy === "avl-high-low") {
-    sortedPizzas.sort((a, b) => (b.available ?? 0) - (a.available ?? 0));
+    processedPizzas.sort((a, b) => (b.available ?? 0) - (a.available ?? 0));
+  }
+
+  return processedPizzas;
+}
+
+function Menu({ cartItems, onAddItem, onRemoveItem }) {
+  const [filters, setFilters] = useState({
+    sortBy: "",
+    includeOutOfStock: false,
+  });
+
+  const processedPizzas = processPizzas(filters);
+
+  function handleFiltersChange(key, value) {
+    setFilters({ ...filters, [key]: value });
   }
 
   return (
     <>
       <h2>Menu</h2>
-      <Actions sortBy={sortBy} onSortChange={setSortBy} />
+      <Actions filters={filters} onFiltersChange={handleFiltersChange} />
       <ul>
-        {sortedPizzas.map((pizza) => (
+        {processedPizzas.map((pizza) => (
           <li key={pizza.id}>
             <Pizza
               pizza={pizza}
@@ -148,18 +166,31 @@ function Menu({ cartItems, onAddItem, onRemoveItem }) {
   );
 }
 
-function Actions({ sortBy, onSortChange }) {
+function Actions({ filters, onFiltersChange }) {
   return (
     <section>
       <label>
         Sort by:&nbsp;
-        <select value={sortBy} onChange={(e) => onSortChange(e.target.value)}>
+        <select
+          value={filters.sortBy}
+          onChange={(e) => onFiltersChange("sortBy", e.target.value)}
+        >
           <option value="">--Please choose an option--</option>
           <option value="price-low-high">Price: Low to High</option>
           <option value="price-high-low">Price: High to Low</option>
           <option value="avl-low-high">Availability: Low to High</option>
           <option value="avl-high-low">Availability: High to Low</option>
         </select>
+      </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={filters.includeOutOfStock}
+          onChange={(e) =>
+            onFiltersChange("includeOutOfStock", !filters.includeOutOfStock)
+          }
+        />
+        Include Out of Stock
       </label>
     </section>
   );
