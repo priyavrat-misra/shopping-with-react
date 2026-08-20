@@ -2,9 +2,14 @@ import { useState } from "react";
 
 function App() {
   const [friends, setFriends] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
 
   function handleAddFriend(friend) {
     setFriends([...friends, friend]);
+  }
+
+  function handleSelect(id) {
+    setSelectedId(id);
   }
 
   return (
@@ -12,8 +17,23 @@ function App() {
       <header>
         <h1>Split</h1>
       </header>
-      {friends.length > 0 && <FriendList friends={friends} />}
-      <AddFriend onAddFriend={handleAddFriend} />
+      <section style={{ width: "50%", float: "left" }}>
+        {friends.length > 0 && (
+          <FriendList
+            friends={friends}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+          />
+        )}
+        <AddFriend onAddFriend={handleAddFriend} />
+      </section>
+      {selectedId && (
+        <section style={{ width: "50%", float: "right" }}>
+          <Bill
+            name={friends.find((friend) => friend.id === selectedId).name}
+          />
+        </section>
+      )}
     </>
   );
 }
@@ -25,7 +45,7 @@ function AddFriend({ onAddFriend }) {
 
   function handleSubmit(event) {
     event.preventDefault();
-    onAddFriend({ name, avatar });
+    onAddFriend({ name, avatar, id: crypto.randomUUID() });
     setName("");
     setAvatar("");
   }
@@ -69,22 +89,30 @@ function AddFriend({ onAddFriend }) {
   );
 }
 
-function FriendList({ friends }) {
+function FriendList({ friends, selectedId, onSelect }) {
   return (
-    <ul>
-      {friends.map(({ name, avatar }, index) => (
+    <ul style={{ padding: 0 }}>
+      {friends.map((friend) => (
         <li
-          key={index}
-          style={{ display: "flex", alignItems: "center", gap: "16px" }}
+          key={friend.id}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+            padding: "0 16px",
+            border: "1px solid lightgray",
+          }}
         >
-          <Friend name={name} avatar={avatar} />
+          <Friend friend={friend} selectedId={selectedId} onSelect={onSelect} />
         </li>
       ))}
     </ul>
   );
 }
 
-function Friend({ name, avatar }) {
+function Friend({ friend, selectedId, onSelect }) {
+  const debt = 0;
+  const { name, avatar, id } = friend;
   return (
     <>
       <img
@@ -98,12 +126,36 @@ function Friend({ name, avatar }) {
           objectPosition: "center",
         }}
       />
-      <div>
+      <div style={{ marginRight: "auto" }}>
         <p>
           <strong>{name}</strong>
         </p>
+        <p>
+          {!debt && `You and ${name} are even.`}
+          {debt > 0 && `${name} owes you $${-debt}.`}
+          {debt < 0 && `You owe ${name} $${debt}.`}
+        </p>
       </div>
+      <button onClick={() => onSelect(selectedId === id ? null : id)}>
+        {selectedId === id ? "Close" : "Select"}
+      </button>
     </>
+  );
+}
+
+function Bill({ name }) {
+  return (
+    <form>
+      <fieldset>
+        <legend>Split a bill with {name}</legend>
+        <p>
+          <label>
+            Bill value:&nbsp;
+            <input type="number" />
+          </label>
+        </p>
+      </fieldset>
+    </form>
   );
 }
 
