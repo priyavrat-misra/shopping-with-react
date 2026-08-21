@@ -12,6 +12,16 @@ function App() {
     setSelectedId(id);
   }
 
+  function handleSplit(id, balance) {
+    setFriends(
+      friends.map((friend) =>
+        friend.id === id
+          ? { ...friend, balance: friend.balance + balance }
+          : friend,
+      ),
+    );
+  }
+
   return (
     <>
       <header>
@@ -31,6 +41,8 @@ function App() {
         <section style={{ width: "50%", float: "right" }}>
           <Bill
             name={friends.find((friend) => friend.id === selectedId).name}
+            id={selectedId}
+            onSplit={handleSplit}
           />
         </section>
       )}
@@ -45,7 +57,8 @@ function AddFriend({ onAddFriend }) {
 
   function handleSubmit(event) {
     event.preventDefault();
-    onAddFriend({ name, avatar, id: crypto.randomUUID() });
+    onAddFriend({ name, avatar, balance: 0, id: crypto.randomUUID() });
+    setAddFriend(false);
     setName("");
     setAvatar("");
   }
@@ -111,8 +124,7 @@ function FriendList({ friends, selectedId, onSelect }) {
 }
 
 function Friend({ friend, selectedId, onSelect }) {
-  const debt = 0;
-  const { name, avatar, id } = friend;
+  const { name, avatar, balance, id } = friend;
   return (
     <>
       <img
@@ -131,9 +143,9 @@ function Friend({ friend, selectedId, onSelect }) {
           <strong>{name}</strong>
         </p>
         <p>
-          {!debt && `You and ${name} are even.`}
-          {debt > 0 && `${name} owes you $${-debt}.`}
-          {debt < 0 && `You owe ${name} $${debt}.`}
+          {!balance && `You and ${name} are even.`}
+          {balance > 0 && `${name} owes you $${balance}.`}
+          {balance < 0 && `You owe ${name} $${-balance}.`}
         </p>
       </div>
       <button onClick={() => onSelect(selectedId === id ? null : id)}>
@@ -143,18 +155,68 @@ function Friend({ friend, selectedId, onSelect }) {
   );
 }
 
-function Bill({ name }) {
+function Bill({ name, id, onSplit }) {
+  const [bill, setBill] = useState(0);
+  const [yourPart, setYourPart] = useState(0);
+  const theirPart = bill - yourPart;
+  const [whosPaying, setWhosPaying] = useState("you");
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    if (!bill) return;
+    onSplit(id, whosPaying === "you" ? theirPart : -yourPart);
+  }
+
   return (
-    <form>
+    <form onSubmit={handleSubmit}>
       <fieldset>
         <legend>Split a bill with {name}</legend>
         <p>
           <label>
             Bill value:&nbsp;
-            <input type="number" />
+            <input
+              type="number"
+              min={0}
+              value={bill}
+              onChange={(e) => setBill(Number(e.target.value))}
+            />
+          </label>
+        </p>
+        <p>
+          <label>
+            Your expense:&nbsp;
+            <input
+              type="number"
+              min={0}
+              value={yourPart}
+              onChange={(e) =>
+                setYourPart(
+                  Number(e.target.value > bill ? yourPart : e.target.value),
+                )
+              }
+            />
+          </label>
+        </p>
+        <p>
+          <label>
+            {name}'s expense:&nbsp;
+            <input type="number" value={theirPart} disabled />
+          </label>
+        </p>
+        <p>
+          <label>
+            Who's paying?&nbsp;
+            <select
+              value={whosPaying}
+              onChange={(e) => setWhosPaying(e.target.value)}
+            >
+              <option value="you">You</option>
+              <option value="them">{name}</option>
+            </select>
           </label>
         </p>
       </fieldset>
+      <button type="submit">Split</button>
     </form>
   );
 }
