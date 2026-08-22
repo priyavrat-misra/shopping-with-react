@@ -14,13 +14,14 @@ function App() {
 
   function handleSplit(id, balance) {
     setFriends(
-      friends.map((friend) =>
-        friend.id === id
-          ? { ...friend, balance: friend.balance + balance }
-          : friend,
+      friends.map((f) =>
+        f.id === id ? { ...f, balance: f.balance + balance } : f,
       ),
     );
+    setSelectedId(null);
   }
+
+  const selectedFriend = friends.find((f) => f.id === selectedId);
 
   return (
     <>
@@ -37,11 +38,12 @@ function App() {
         )}
         <AddFriend onAddFriend={handleAddFriend} />
       </section>
-      {selectedId && (
+      {selectedFriend && (
         <section style={{ width: "50%", float: "right" }}>
           <Bill
-            name={friends.find((friend) => friend.id === selectedId).name}
-            id={selectedId}
+            key={selectedFriend.id}
+            id={selectedFriend.id}
+            name={selectedFriend.name}
             onSplit={handleSplit}
           />
         </section>
@@ -51,19 +53,19 @@ function App() {
 }
 
 function AddFriend({ onAddFriend }) {
-  const [addFriend, setAddFriend] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(true);
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState("");
 
   function handleSubmit(event) {
     event.preventDefault();
     onAddFriend({ name, avatar, balance: 0, id: crypto.randomUUID() });
-    setAddFriend(false);
+    setShowAddForm(false);
     setName("");
     setAvatar("");
   }
 
-  return addFriend ? (
+  return showAddForm ? (
     <form onSubmit={handleSubmit}>
       <fieldset>
         <legend>New Friend</legend>
@@ -93,21 +95,25 @@ function AddFriend({ onAddFriend }) {
       <button type="submit" value="add">
         Add
       </button>
-      <button type="button" value="cancel" onClick={() => setAddFriend(false)}>
+      <button
+        type="button"
+        value="cancel"
+        onClick={() => setShowAddForm(false)}
+      >
         Cancel
       </button>
     </form>
   ) : (
-    <button onClick={() => setAddFriend(true)}>Add Friend</button>
+    <button onClick={() => setShowAddForm(true)}>Add Friend</button>
   );
 }
 
 function FriendList({ friends, selectedId, onSelect }) {
   return (
     <ul style={{ padding: 0 }}>
-      {friends.map((friend) => (
+      {friends.map((f) => (
         <li
-          key={friend.id}
+          key={f.id}
           style={{
             display: "flex",
             alignItems: "center",
@@ -116,7 +122,7 @@ function FriendList({ friends, selectedId, onSelect }) {
             border: "1px solid lightgray",
           }}
         >
-          <Friend friend={friend} selectedId={selectedId} onSelect={onSelect} />
+          <Friend friend={f} selectedId={selectedId} onSelect={onSelect} />
         </li>
       ))}
     </ul>
@@ -189,11 +195,10 @@ function Bill({ name, id, onSplit }) {
               type="number"
               min={0}
               value={yourPart}
-              onChange={(e) =>
-                setYourPart(
-                  Number(e.target.value > bill ? yourPart : e.target.value),
-                )
-              }
+              onChange={(e) => {
+                const enteredValue = Number(e.target.value);
+                setYourPart(enteredValue > bill ? yourPart : enteredValue);
+              }}
             />
           </label>
         </p>
